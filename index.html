@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Thi trắc nghiệm</title>
+  <style>
+    body {font-family: Arial, sans-serif; background: linear-gradient(135deg,#74ebd5,#acb6e5); margin:0; padding:0;}
+    .container {max-width: 900px; margin: 40px auto; background: #fff; border-radius: 12px; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);}    
+    h1 {text-align:center; color:#333;}
+    .question {margin-bottom: 20px;}
+    .question h3 {margin-bottom:10px;}
+    label {display:block; padding:6px 10px; border-radius:6px; cursor:pointer;}
+    label:hover {background:#f0f0f0;}
+    button {padding:10px 20px; font-size:16px; border:none; border-radius:8px; background:#4CAF50; color:#fff; cursor:pointer;}
+    button:hover {opacity:0.9;}
+    #login {text-align:center;}
+    #quiz {display:none;}
+    #result {display:none; text-align:center; font-size:20px; color:#d32f2f;}
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>📝 BÀI THI TRẮC NGHIỆM</h1>
+  <div id="timer" style="text-align:center;font-size:18px;color:#1976d2;font-weight:bold;display:none;">⏳ Thời gian: 15:00</div>
+
+  <!-- Phần nhập mã -->
+  <div id="login">
+    <p>Nhập mã để vào thi:</p>
+    <input type="text" id="code" placeholder="Nhập mã" />
+    <br><br>
+    <button onclick="startQuiz()">Vào thi</button>
+  </div>
+
+  <!-- Phần bài thi -->
+  <form id="quiz"></form>
+
+  <!-- Kết quả -->
+  <div id="result"></div>
+</div>
+
+<script>
+// ====== MÃ DỰ THI ======
+const validCode = "12345"; // đổi mã tại đây
+let used = false;
+
+// ====== NGÂN HÀNG 35 CÂU HỎI ======
+const allQuestions = [
+  {q:"C++ là ngôn ngữ gì?", a:["Thông dịch","Lập trình","Đánh dấu","Thiết kế"], c:1},
+  {q:"Ký hiệu kết thúc lệnh trong C++?", a:[".",",",";",":"], c:2},
+  {q:"Thư viện nhập xuất chuẩn?", a:["<math>","<iostream>","<string>","<vector>"], c:1},
+  {q:"Toán tử AND là?", a:["&&","||","!","&"], c:0},
+  {q:"Biến kiểu số nguyên?", a:["float","double","int","char"], c:2},
+];
+
+// Tự động thêm câu mẫu cho đủ 35
+for(let i=6;i<=35;i++){
+  allQuestions.push({
+    q:`Câu hỏi số ${i}?`,
+    a:["Đáp án A","Đáp án B","Đáp án C","Đáp án D"],
+    c:Math.floor(Math.random()*4)
+  });
+}
+
+let selectedQuestions = [];
+let timeLeft = 1 * 60; // 15 phút
+let timerInterval;
+
+// ====== HÀM TRỘN ======
+function shuffle(arr){
+  return arr.sort(()=>Math.random()-0.5);
+}
+
+// ====== BẮT ĐẦU THI ======
+function startQuiz(){
+  timeLeft = 1 * 60; // reset thời gian
+  if(used){ alert("Mã này đã thi rồi!"); return; }
+  const code = document.getElementById("code").value;
+  if(code !== validCode){ alert("Mã không hợp lệ!"); return; }
+
+  used = true;
+  document.getElementById("login").style.display="none";
+  document.getElementById("quiz").style.display="block";
+  document.getElementById("timer").style.display="block";
+  startTimer();
+
+  selectedQuestions = shuffle([...allQuestions]).slice(0,24);
+  selectedQuestions.forEach(q=> q.a = shuffle(q.a));
+
+  renderQuiz();
+}
+
+// ====== HIỂN THỊ CÂU HỎI ======
+function renderQuiz(){
+  const quiz = document.getElementById("quiz");
+  quiz.innerHTML = "";
+
+  selectedQuestions.forEach((item,index)=>{
+    const div = document.createElement("div");
+    div.className = "question";
+    div.innerHTML = `<h3>Câu ${index+1}: ${item.q}</h3>`;
+    item.a.forEach((ans,i)=>{
+      div.innerHTML += `<label><input type='radio' name='q${index}' value='${i}'> ${ans}</label>`;
+    });
+    quiz.appendChild(div);
+  });
+
+  quiz.innerHTML += "<button type='button' onclick='submitQuiz()'>Nộp bài</button>";
+}
+
+// ====== ĐẾM NGƯỢC THỜI GIAN ======
+function startTimer(){
+  const timer = document.getElementById("timer");
+  timerInterval = setInterval(()=>{
+    let minutes = Math.floor(timeLeft/60);
+    let seconds = timeLeft % 60;
+    timer.innerHTML = `⏳ Thời gian: ${minutes}:${seconds.toString().padStart(2,'0')}`;
+    timeLeft--;
+    if(timeLeft < 0){
+      clearInterval(timerInterval);
+      alert("⏰ Hết thời gian! Bài thi sẽ được nộp tự động.");
+      submitQuiz();
+    }
+  },1000);
+}
+
+// ====== CHẤM ĐIỂM ======
+function submitQuiz(){
+  clearInterval(timerInterval);
+  let score = 0;
+  selectedQuestions.forEach((item,index)=>{
+    const checked = document.querySelector(`input[name='q${index}']:checked`);
+    if(checked && parseInt(checked.value) === item.c){ score += 0.25; }
+  });
+
+  document.getElementById("quiz").style.display="none";
+  document.getElementById("result").style.display="block";
+  document.getElementById("result").innerHTML = `🎉 Bạn đạt: <b>${score.toFixed(2)}</b> điểm / 6 điểm`;
+}
+</script>
+</body>
+</html>
